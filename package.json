@@ -1,0 +1,11 @@
+{
+  "name": "scrape-moje-o2-invoices",
+  "version": "1.0.0",
+  "main": "index.mjs",
+  "repository": "https://github.com/TomasHubelbauer/scrape-moje-o2-invoices.git",
+  "author": "Tomáš Hübelbauer <tomas@hubelbauer.net>",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^0.13.0"
+  }
+}
