@@ -1,5 +1,7 @@
 # Scrape MojeO2 Invoices
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/TomasHubelbauer/scrape-moje-o2-invoices.svg)](https://greenkeeper.io/)
+
 A utility for automatically logging onto MojeO2 and downloading invoice PDFs.
 
 ## Running
