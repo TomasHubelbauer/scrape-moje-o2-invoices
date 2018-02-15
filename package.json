@@ -6,6 +6,6 @@
   "author": "Tomáš Hübelbauer <tomas@hubelbauer.net>",
   "license": "MIT",
   "dependencies": {
-    "puppeteer": "^0.13.0"
+    "puppeteer": "^1.0.0"
   }
 }
