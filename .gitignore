@@ -1,3 +1,4 @@
 node_modules
-# Fill in as per README.md
-secrets.mjs
+
+# The downloaded invoices
+*.pdf

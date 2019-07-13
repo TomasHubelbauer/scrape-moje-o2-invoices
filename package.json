@@ -5,7 +5,12 @@
   "repository": "https://github.com/TomasHubelbauer/scrape-moje-o2-invoices.git",
   "author": "Tomáš Hübelbauer <tomas@hubelbauer.net>",
   "license": "MIT",
+  "scripts": {
+    "start": "node --experimental-modules index.mjs -- tomas@hubelbauer.net"
+  },
   "dependencies": {
-    "puppeteer": "^0.13.0"
+    "fs-extra": "^8.1.0",
+    "keytar": "^4.11.0",
+    "puppeteer": "^1.18.1"
   }
 }
