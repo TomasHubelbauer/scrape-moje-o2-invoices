@@ -14,9 +14,22 @@ void async function () {
 		}
 	}
 
-	const browser = await puppeteer.launch({ headless: false, slowMo: 20 });
+	const browser = await puppeteer.launch({ headless: false, slowMo: 20, args: ['--window-size=800,600' /* Match default viewport */] });
 	try {
 		const page = (await browser.pages())[0];
+
+		// Speed up browsing and clean up screenshots by blocking 3rd party networking
+		await page.setRequestInterception(true);
+		page.on('request', request => {
+			const url = new URL(request.url());
+			if (url.hostname !== 'moje.o2.cz' && url.hostname !== 'login.o2.cz' && url.hostname !== 'sso.o2.cz') {
+				request.abort()
+			} else {
+				request.continue();
+			}
+		});
+
+		await page.tracing.start({ screenshots: true });
 		await page.goto('https://moje.o2.cz/web/o2/login');
 		await page.focus('#username');
 		await page.keyboard.type(userName);
@@ -38,7 +51,6 @@ void async function () {
 
 		for (const href of hrefs) {
 			await page.goto(href);
-
 			const { name, url } = await page.evaluate(element => new Promise(async (resolve, reject) => {
 				const response = await fetch(element.href);
 				const blob = await response.blob();
