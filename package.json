@@ -10,7 +10,10 @@
   },
   "dependencies": {
     "fs-extra": "^8.1.0",
+    "gifencoder": "^2.0.1",
+    "inkjet": "^2.1.2",
     "keytar": "^4.11.0",
-    "puppeteer": "^1.18.1"
+    "puppeteer": "^1.18.1",
+    "terminal-image": "^0.2.0"
   }
 }

@@ -3,6 +3,11 @@ import keytar from 'keytar';
 import readline from 'readline';
 import fs from 'fs-extra';
 
+// Screenshot
+import GIFEncoder from 'gifencoder';
+import inkjet from 'inkjet';
+import terminalImage from 'terminal-image';
+
 void async function () {
 	const userName = process.argv[2] === '--' ? process.argv[3] : await ask('MojeO2.cz email:');
 	let password = await keytar.getPassword('MojeO2.cz', userName);
@@ -14,10 +19,9 @@ void async function () {
 		}
 	}
 
-	const browser = await puppeteer.launch({ headless: false, slowMo: 20, args: ['--window-size=800,600' /* Match default viewport */] });
+	const browser = await puppeteer.launch({ headless: false, args: ['--window-size=800,600' /* Match default viewport */] });
+	const page = (await browser.pages())[0];
 	try {
-		const page = (await browser.pages())[0];
-
 		// Speed up browsing and clean up screenshots by blocking 3rd party networking
 		await page.setRequestInterception(true);
 		page.on('request', request => {
@@ -32,12 +36,15 @@ void async function () {
 		await page.tracing.start({ screenshots: true });
 		await page.goto('https://moje.o2.cz/web/o2/login');
 		await page.focus('#username');
+		await page.addStyleTag({ content: '#username { filter: blur(10px);  }' });
 		await page.keyboard.type(userName);
 		await page.focus('#password');
+		await page.addStyleTag({ content: '#password { filter: blur(10px);  }' });
 		await page.keyboard.type(password);
 		await page.click('#submitButton');
 		await page.waitForNavigation(); // https://moje.o2.cz/web/o2/userdashboard
 		await page.click('span[data-key="onecrm.gui_billingManagement.invoices.link.statement"]');
+		await page.addStyleTag({ content: '.o2-subheader__perex, .js-clickable-more, .js-lazylist b { filter: blur(10px);  }' });
 
 		// The table is lazy-loaded
 		await page.waitForSelector('.js-clickable-more');
@@ -50,8 +57,9 @@ void async function () {
 		}
 
 		for (const href of hrefs) {
-			await page.goto(href);
-			const { name, url } = await page.evaluate(element => new Promise(async (resolve, reject) => {
+			await page.goto(href, { waitUntil: 'domcontentloaded' });
+			await page.addStyleTag({ content: 'body { filter: blur(10px);  }' });
+			const { name, url } = await page.evaluate(element => new Promise(async resolve => {
 				const response = await fetch(element.href);
 				const blob = await response.blob();
 				const fileReader = new FileReader();
@@ -64,6 +72,38 @@ void async function () {
 			console.log('Downloaded and saved', name);
 		}
 	} finally {
+		console.log('Collecting and parsing the trace data.');
+		const trace = JSON.parse(String(await page.tracing.stop()));
+		const snapshotTraceEvents = trace.traceEvents.filter(traceEvent => traceEvent.args.snapshot);
+
+		let gifEncoder;
+		for (const traceEvent of snapshotTraceEvents) {
+			const buffer = Buffer.from(traceEvent.args.snapshot, 'base64');
+			const { width, height, data } = await new Promise((resolve, reject) => inkjet.decode(buffer, (error, data) => {
+				if (error) {
+					reject(error);
+				}
+
+				resolve(data);
+			}));
+
+			if (!gifEncoder) {
+				gifEncoder = new GIFEncoder(width, height);
+				gifEncoder.createReadStream().pipe(fs.createWriteStream('screenshot.gif'));
+				gifEncoder.start();
+				gifEncoder.setRepeat(0); // Repeat
+				gifEncoder.setDelay(50);
+				gifEncoder.setQuality(10); // Best?
+			}
+
+			console.log(await terminalImage.buffer(buffer));
+			if (await ask('Confirm the frame is good to go to the screenshot: (y)') === 'y') {
+				gifEncoder.addFrame(data);
+			}
+		}
+
+		console.log('Finishing up the screenshot animation.');
+		gifEncoder.finish();
 		await browser.close();
 	}
 }()
